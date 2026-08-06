@@ -1,0 +1,8 @@
+### Should send 200 OK with no body
+GET http://localhost:3000/
+
+### Should send 200 OK with parsed headers in body
+GET http://localhost:3000/headers
+
+### Should return 404 Not Found on other requests
+GET http://localhost:3000/test
