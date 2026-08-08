@@ -9,7 +9,7 @@ export class Router {
     get: {},
     post: {},
     patch: {},
-    update: {},
+    put: {},
     delete: {},
   }
 
@@ -22,22 +22,20 @@ export class Router {
   }
 
   _prepareRequest({path, method, body, headers}) {
-    const request = {
+    return {
       path,
       method,
       body,
       headers
     };
-
-    return request;
   }
   _prepareResponse() {
     const socket = this._socket;
-    const response = {
+    return {
       headers: {},
       statusCode: null,
       statusMessage: "",
-      send (data = '') {
+      send(data = '') {
         const isJSON = checkIsJSON(data);
         let length = 0;
 
@@ -53,14 +51,15 @@ export class Router {
 
         this.headers['Content-Length'] = length;
 
-        const serializedStatusLine = serializeStatusLine({ statusCode: this.statusCode, reasonPhrase: this.statusMessage });
+        const serializedStatusLine = serializeStatusLine({
+          statusCode: this.statusCode,
+          reasonPhrase: this.statusMessage
+        });
         const serializedHeaders = serializeHeaders(this.headers)
-        const response = getHttpResponse({ statusLine: serializedStatusLine, headers: serializedHeaders, body: data })
+        const response = getHttpResponse({statusLine: serializedStatusLine, headers: serializedHeaders, body: data})
         socket.write(response);
       },
-    }
-
-    return response;
+    };
   }
 
 
@@ -77,31 +76,36 @@ export class Router {
     if (this._checkInitialization()) {
       const normalizedPath = path.toLowerCase();
       const normalizedMethod = method.toLowerCase();
+      const response = this._prepareResponse();
 
       if (!this._routes[normalizedMethod]) {
-        throw Error(`Not existing method: ${method.toUpperCase()}`);
+        response.statusCode = 400;
+        response.statusMessage = 'Bad Request';
+        response.send();
+
+        return;
+      }
+
+      const pathExists = Object.values(this._routes).some(method => normalizedPath in method);
+
+      if (!(normalizedPath in this._routes[normalizedMethod]) && pathExists) {
+        response.statusCode = 405;
+        response.statusMessage = 'Method Not Allowed';
+        response.send();
+
+        return;
       }
 
       const request = this._prepareRequest({ path, method, headers, body });
-      const response = this._prepareResponse();
 
       if (this._routes[normalizedMethod][normalizedPath]) {
         this._routes[normalizedMethod][normalizedPath](request, response);
       } else if (this._routes[normalizedMethod]['*']) {
         this._routes[normalizedMethod]['*'](request, response);
       } else {
-        const headers = {
-          "Content-Length": 0,
-          "Content-Type": 'text/plain'
-        };
-        const statusLine = {
-          statusCode: 404,
-          reasonPhrase: "Not Found"
-        };
-        const serializedStatusLine = serializeStatusLine(statusLine);
-        const serializedHeaders = serializeHeaders(headers)
-        const response = getHttpResponse({ statusLine: serializedStatusLine, headers: serializedHeaders })
-        this._socket.write(response);
+        response.statusCode = 404;
+        response.statusMessage = 'Not Found';
+        response.send();
       }
     }
   }
