@@ -30,7 +30,8 @@ server.on('connection', (socket) => {
             const { method, path } = getRequestLine(rawRequestLine);
             const headers = getHeadersObject(rawHeaders);
 
-            router.handle({ path, method, headers, body: requestBody})
+            router.handle({ path, method, headers, body: requestBody});
+            rawData = '';
         }
     })
 })
