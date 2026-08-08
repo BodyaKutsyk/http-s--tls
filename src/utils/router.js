@@ -109,4 +109,10 @@ export class Router {
       }
     }
   }
+  internalServerError() {
+    const response = this._prepareResponse();
+    response.statusCode = 500;
+    response.statusMessage = 'Internal Server Error';
+    response.send();
+  }
 }

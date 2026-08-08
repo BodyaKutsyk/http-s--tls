@@ -21,14 +21,22 @@ export const httpHandler = (socket) => {
   })
 
   socket.on('data', (chunk) => {
-    rawData += chunk.toString();
+    try {
+      rawData += chunk.toString();
 
-    if (rawData.includes('\r\n\r\n')) {
-      const {  requestBody, rawRequestLine, rawHeaders } = parseRawHttp(rawData);
-      const { method, path } = getRequestLine(rawRequestLine);
-      const headers = getHeadersObject(rawHeaders);
+      if (rawData.includes('\r\n\r\n')) {
+        const {  requestBody, rawRequestLine, rawHeaders } = parseRawHttp(rawData);
+        const { method, path } = getRequestLine(rawRequestLine);
+        const headers = getHeadersObject(rawHeaders);
 
-      router.handle({ path, method, headers, body: requestBody})
+        router.handle({ path, method, headers, body: requestBody})
+      }
+    } catch {
+      router.internalServerError();
     }
+  })
+
+  socket.on('error', () => {
+    router.internalServerError();
   })
 }
