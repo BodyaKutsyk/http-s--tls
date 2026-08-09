@@ -1,0 +1,8 @@
+{
+  "type": "module",
+  "scripts": {
+    "start:http": "node --env-file=.env src/server.js",
+    "start:https": "node --env-file=.env src/https-server.js",
+    "start": "npm run start:http & npm run start:https"
+  }
+}
