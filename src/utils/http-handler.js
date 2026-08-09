@@ -30,9 +30,11 @@ export const httpHandler = (socket) => {
         const headers = getHeadersObject(rawHeaders);
 
         router.handle({ path, method, headers, body: requestBody})
+        rawData = '';
       }
     } catch {
       router.internalServerError();
+      rawData = ''
     }
   })
 
